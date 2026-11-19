@@ -49,6 +49,10 @@ body {
   font-size: 0.85rem;
   color: #94a3b8;
 }
+#img {
+  width: 30px;
+  height: 30px;
+}
 
 .admin-btn {
   background: transparent;
