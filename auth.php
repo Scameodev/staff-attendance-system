@@ -1,9 +1,18 @@
 <?php
+require_once __DIR__ . "/config.php";
+
 ini_set("session.cookie_httponly", 1);
 ini_set("session.cookie_samesite", "Lax");
-session_start();
 
-define("ADMIN_PASSWORD_HASH", '$2y$12$qXFK.10GvhuBOKTDK8UIz.02cqPJcC/zQnJdhvxGIwmevxQTTjAxi');
+$secureCookies = app_env("APP_SECURE_COOKIES", "");
+
+if ($secureCookies === "") {
+    $secureCookies = (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off") ? "1" : "0";
+}
+
+ini_set("session.cookie_secure", $secureCookies === "1" ? "1" : "0");
+
+session_start();
 
 function send_json($data, $status = 200)
 {

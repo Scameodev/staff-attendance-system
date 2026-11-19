@@ -1,12 +1,9 @@
 <?php
+require_once __DIR__ . "/config.php";
+
 header("Content-Type: application/json; charset=utf-8");
 
-$host = "localhost";
-$username = "root";
-$password = "";
-$database = "staff_attendance";
-
-$conn = new mysqli($host, $username, $password, $database);
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, (int) DB_PORT);
 
 if ($conn->connect_error) {
     http_response_code(500);
