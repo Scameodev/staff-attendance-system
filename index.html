@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Attendance System</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <div class="header-card">
+        <div class="header-copy">
+          <div class="header-title">🎓 TEACHER ATTENDANCE SYSTEM</div>
+          <div class="header-subtitle">Staff attendance recording dashboard</div>
+        </div>
+        <button type="button" id="adminBtn" class="admin-btn">ADMIN</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="totalStaffCount">0</div>
+          <div class="stat-label">Total Staff</div>
+        </div>
+        <div class="stat-card present">
+          <div class="stat-number" id="presentTodayCount">0</div>
+          <div class="stat-label">Present Today</div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-title">Record Teacher Attendance</div>
+
+        <div class="input-group">
+          <label class="input-label" for="staffIdInput">Enter Staff ID</label>
+          <input
+            type="text"
+            id="staffIdInput"
+            class="text-input"
+            placeholder="e.g. STF001"
+            autocomplete="off"
+          />
+          <span id="feedbackMessage" class="feedback-msg"></span>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="attendanceDateInput"
+            >Attendance Date</label
+          >
+          <input
+            type="text"
+            id="attendanceDateInput"
+            class="read-only-input"
+            value="Automatically recorded by system"
+            readonly
+          />
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="timeInInput">Time In</label>
+          <input
+            type="text"
+            id="timeInInput"
+            class="read-only-input"
+            value="Automatically recorded when attendance is marked"
+            readonly
+          />
+        </div>
+
+        <button type="button" id="markAttendanceBtn" class="submit-btn">
+          <span>✔</span> MARK ATTENDANCE
+        </button>
+      </div>
+
+      <div class="register-bar">
+        <label class="register-label" for="registerDateInput"
+          >Viewing register for</label
+        >
+        <input type="date" id="registerDateInput" class="date-input" />
+      </div>
+
+      <div class="records-section" id="recordsSection" style="display: none">
+        <div class="records-header">
+          <div class="records-title" id="recordsTitle">
+            Today's Attendance Records
+          </div>
+        </div>
+
+        <table class="attendance-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Staff ID</th>
+              <th>Time In</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTableBody"></tbody>
+        </table>
+        <div class="footer-note">
+          Note: Staff who have not signed in are marked Absent automatically at
+          4:00 PM.
+        </div>
+      </div>
+
+    </div>
+
+    <div class="admin-page" id="adminPage" hidden>
+      <div class="admin-page-inner">
+        <div class="admin-page-header">
+          <div>
+            <div class="admin-page-title">ADMIN PANEL</div>
+            <div class="admin-page-subtitle">Staff management</div>
+          </div>
+          <div class="admin-actions">
+            <button type="button" id="adminLogoutBtn" class="admin-back-btn">
+              LOGOUT
+            </button>
+            <button type="button" id="adminBackBtn" class="admin-back-btn">
+              BACK
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-page-grid">
+          <div class="form-card" id="registerStaffCard">
+            <div class="form-title">Register New Staff</div>
+
+            <div class="input-group">
+              <label class="input-label" for="staffNameInput">Full Name</label>
+              <input
+                type="text"
+                id="staffNameInput"
+                class="text-input"
+                placeholder="e.g. Jane Doe"
+                autocomplete="off"
+                maxlength="60"
+              />
+              <span id="registerFeedback" class="feedback-msg"></span>
+            </div>
+
+            <button
+              type="button"
+              id="registerStaffBtn"
+              class="submit-btn secondary"
+            >
+              <span>＋</span> REGISTER STAFF
+            </button>
+
+            <div class="footer-note">
+              A Staff ID is generated automatically when a new staff member is
+              registered.
+            </div>
+          </div>
+
+          <div class="form-card remove-staff-card" id="removeStaffCard">
+            <div class="form-title">Remove Staff</div>
+
+            <div class="footer-note">
+              Choose a staff member to delete from the database.
+            </div>
+
+            <button
+              type="button"
+              id="openRemoveStaffBtn"
+              class="submit-btn danger"
+            >
+              REMOVE STAFF
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="removeStaffModal" hidden>
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="removeStaffModalTitle"
+      >
+        <div class="modal-header">
+          <div class="modal-title" id="removeStaffModalTitle">
+            Select Staff to Remove
+          </div>
+          <button
+            type="button"
+            id="closeRemoveStaffBtn"
+            class="modal-close"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <div id="staffList" class="staff-list">
+          <div class="no-staff-message">Loading staff members...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="loginModal" hidden>
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="loginModalTitle"
+      >
+        <div class="modal-header">
+          <div class="modal-title" id="loginModalTitle">Admin Login</div>
+          <button
+            type="button"
+            id="closeLoginBtn"
+            class="modal-close"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <form id="loginForm" class="login-form">
+          <div class="input-group">
+            <label class="input-label" for="adminPasswordInput"
+              >Admin Pass Code</label
+            >
+            <input
+              type="password"
+              id="adminPasswordInput"
+              class="text-input"
+              autocomplete="current-password"
+            />
+            <span id="loginFeedback" class="feedback-msg"></span>
+          </div>
+          <button type="submit" id="loginSubmitBtn" class="submit-btn">
+            LOGIN
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
