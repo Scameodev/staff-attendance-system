@@ -71,6 +71,7 @@ echo json_encode([
     "name" => $staffName,
     "staffId" => $staffId,
     "timeIn" => date("g:i A", strtotime($time)),
+    "time24" => date("H:i", strtotime($time)),
     "status" => $status
 ]);
 

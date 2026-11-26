@@ -1,11 +1,9 @@
 <?php
-require_once __DIR__ . "/auth.php";
-require_admin();
-
 require_once __DIR__ . "/db_connect.php";
 
 $result = $conn->query(
-    "SELECT staff_id, full_name FROM staff ORDER BY staff_id ASC"
+    "SELECT staff_id, full_name, phone
+     FROM staff ORDER BY staff_id ASC"
 );
 
 $staff = [];
@@ -13,7 +11,8 @@ $staff = [];
 while ($row = $result->fetch_assoc()) {
     $staff[] = [
         "staffId" => $row["staff_id"],
-        "fullName" => $row["full_name"]
+        "fullName" => $row["full_name"],
+        "phone" => $row["phone"] ?? ""
     ];
 }
 

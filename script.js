@@ -8,7 +8,10 @@ const API = {
     register: "register_staff.php",
     mark: "mark_attendance.php",
     remove: "remove_staff.php",
-    finalize: "finalize_attendance.php"
+    finalize: "finalize_attendance.php",
+    updateTime: "update_attendance_time.php",
+    updateStaff: "update_staff.php",
+    report: "get_monthly_report.php"
 };
 
 const CUTOFF_HOUR = 16;
@@ -25,6 +28,7 @@ const recordsTitle = document.getElementById("recordsTitle");
 const registerStaffBtn = document.getElementById("registerStaffBtn");
 const staffNameInput = document.getElementById("staffNameInput");
 const registerFeedback = document.getElementById("registerFeedback");
+const registerPhoneInput = document.getElementById("registerPhoneInput");
 const registerDateInput = document.getElementById("registerDateInput");
 const adminBtn = document.getElementById("adminBtn");
 const adminPage = document.getElementById("adminPage");
@@ -40,8 +44,41 @@ const openRemoveStaffBtn = document.getElementById("openRemoveStaffBtn");
 const closeRemoveStaffBtn = document.getElementById("closeRemoveStaffBtn");
 const removeStaffModal = document.getElementById("removeStaffModal");
 const staffList = document.getElementById("staffList");
+const editTimeModal = document.getElementById("editTimeModal");
+const editTimeForm = document.getElementById("editTimeForm");
+const editTimeStaffLabel = document.getElementById("editTimeStaffLabel");
+const editTimeDateInput = document.getElementById("editTimeDateInput");
+const editTimeInput = document.getElementById("editTimeInput");
+const editTimeFeedback = document.getElementById("editTimeFeedback");
+const editTimeSubmitBtn = document.getElementById("editTimeSubmitBtn");
+const closeEditTimeBtn = document.getElementById("closeEditTimeBtn");
+const adminTimeDateInput = document.getElementById("adminTimeDateInput");
+const adminTimeTableBody = document.getElementById("adminTimeTableBody");
+const reportMonthInput = document.getElementById("reportMonthInput");
+const reportStaffIdInput = document.getElementById("reportStaffIdInput");
+const generateReportBtn = document.getElementById("generateReportBtn");
+const reportFeedback = document.getElementById("reportFeedback");
+const reportResults = document.getElementById("reportResults");
+const reportTitle = document.getElementById("reportTitle");
+const reportSummary = document.getElementById("reportSummary");
+const reportTableBody = document.getElementById("reportTableBody");
+const reportNote = document.getElementById("reportNote");
+const staffDirectoryBody = document.getElementById("staffDirectoryBody");
+const staffDirectoryCount = document.getElementById("staffDirectoryCount");
+const dashboardFeedback = document.getElementById("dashboardFeedback");
+const staffSearchInput = document.getElementById("staffSearchInput");
+const editStaffModal = document.getElementById("editStaffModal");
+const editStaffForm = document.getElementById("editStaffForm");
+const editStaffName = document.getElementById("editStaffName");
+const editStaffPhone = document.getElementById("editStaffPhone");
+const editStaffFeedback = document.getElementById("editStaffFeedback");
+const editStaffSubmitBtn = document.getElementById("editStaffSubmitBtn");
+const closeEditStaffBtn = document.getElementById("closeEditStaffBtn");
 
-let teachers = [];
+let staffMembers = [];
+let adminLoggedIn = false;
+let editingRecord = null;
+let editingStaff = null;
 let todayRecords = [];
 let attendanceLocked = false;
 let attendanceDay = getTodayDate();
@@ -102,6 +139,7 @@ function renderRecords(rows) {
         const tr = attendanceTableBody.insertRow();
         tr.insertCell(0).textContent = row.fullName;
         tr.insertCell(1).textContent = row.staffId;
+
         tr.insertCell(2).textContent = row.timeIn;
         const statusCell = tr.insertCell(3);
         statusCell.textContent = row.status;
@@ -110,6 +148,97 @@ function renderRecords(rows) {
     });
     recordsSection.style.display = rows.length > 0 ? "block" : "none";
 }
+
+function renderAdminTimeRecords(rows) {
+    adminTimeTableBody.innerHTML = "";
+
+    if (rows.length === 0) {
+        const tr = adminTimeTableBody.insertRow();
+        const td = tr.insertCell(0);
+        td.colSpan = 4;
+        td.className = "empty-note";
+        td.textContent = "No attendance records for this date.";
+        return;
+    }
+
+    rows.forEach(function (row) {
+        const tr = adminTimeTableBody.insertRow();
+        tr.insertCell(0).textContent = row.fullName;
+        tr.insertCell(1).textContent = row.staffId;
+
+        const timeCell = tr.insertCell(2);
+        timeCell.className = "time-in-cell";
+        timeCell.textContent = row.timeIn;
+
+        const actionCell = tr.insertCell(3);
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "edit-time-btn";
+        editBtn.textContent = "EDIT";
+        editBtn.addEventListener("click", function () {
+            openEditTimeModal(row);
+        });
+        actionCell.appendChild(editBtn);
+    });
+}
+
+async function loadAdminTimeRecords() {
+    const date = adminTimeDateInput.value || getTodayDate();
+    const data = await fetchJson(
+        API.attendance + "?date=" + encodeURIComponent(date)
+    );
+    renderAdminTimeRecords(data.records || []);
+}
+
+function closeEditTimeModal() {
+    editTimeModal.hidden = true;
+    editingRecord = null;
+    showFeedback(editTimeFeedback, "", null);
+}
+
+function openEditTimeModal(row) {
+    editingRecord = row;
+    editTimeStaffLabel.textContent = row.fullName + " (" + row.staffId + ")";
+    editTimeDateInput.value = adminTimeDateInput.value || getTodayDate();
+    editTimeInput.value = row.time24 || "";
+    showFeedback(editTimeFeedback, "", null);
+    editTimeModal.hidden = false;
+    editTimeInput.focus();
+}
+
+editTimeForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    if (!editingRecord || !editTimeInput.value) {
+        showFeedback(editTimeFeedback, "Please enter a time.", "error");
+        return;
+    }
+
+    editTimeSubmitBtn.disabled = true;
+
+    try {
+        const data = await postJson(API.updateTime, {
+            staffId: editingRecord.staffId,
+            date: editTimeDateInput.value,
+            timeIn: editTimeInput.value
+        });
+
+        if (data.success) {
+            closeEditTimeModal();
+            await loadAdminTimeRecords();
+            await loadTodayAttendance();
+            await loadRecordsForView();
+            await loadReport();
+        } else {
+            showFeedback(editTimeFeedback, data.message, "error");
+        }
+    } catch (err) {
+        console.error(err);
+        showFeedback(editTimeFeedback, "Could not reach the server.", "error");
+    } finally {
+        editTimeSubmitBtn.disabled = false;
+    }
+});
 
 function syncTodayState(rows) {
     todayRecords = rows;
@@ -124,19 +253,134 @@ function syncTodayState(rows) {
     presentTodayCount.textContent = presentStaffIds.size;
 }
 
+function makeDirectoryButton(label, className) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = className;
+    button.textContent = label;
+    return button;
+}
+
+function renderStaffDirectory() {
+    const search = staffSearchInput.value.trim().toLowerCase();
+    const visibleMembers = staffMembers.filter(function (staffMember) {
+        return search === "" ||
+            staffMember.fullName.toLowerCase().indexOf(search) !== -1 ||
+            staffMember.staffId.toLowerCase().indexOf(search) !== -1;
+    });
+
+    staffDirectoryCount.textContent =
+        visibleMembers.length === staffMembers.length
+            ? visibleMembers.length === 1
+                ? "1 staff"
+                : visibleMembers.length + " staff"
+            : visibleMembers.length + " of " + staffMembers.length + " staff";
+
+    staffDirectoryBody.innerHTML = "";
+
+    if (visibleMembers.length === 0) {
+        const tr = staffDirectoryBody.insertRow();
+        const td = tr.insertCell(0);
+        td.colSpan = 4;
+        td.className = "empty-note";
+        td.textContent = staffMembers.length === 0
+            ? "No staff registered."
+            : "No staff match the current search.";
+        return;
+    }
+
+    visibleMembers.forEach(function (staffMember) {
+        const tr = staffDirectoryBody.insertRow();
+        tr.insertCell(0).textContent = staffMember.fullName;
+
+        const idCell = tr.insertCell(1);
+        idCell.className = "staff-id-cell";
+        idCell.textContent = staffMember.staffId;
+
+        tr.insertCell(2).textContent = staffMember.phone || "-";
+
+        const actionsCell = tr.insertCell(3);
+        if (adminLoggedIn) {
+            const editBtn = makeDirectoryButton("EDIT", "directory-action-btn edit");
+            editBtn.addEventListener("click", function () {
+                openEditStaffModal(staffMember);
+            });
+            actionsCell.appendChild(editBtn);
+        }
+    });
+}
+
+function closeEditStaffModal() {
+    editStaffModal.hidden = true;
+    editingStaff = null;
+    showFeedback(editStaffFeedback, "", null);
+}
+
+function openEditStaffModal(staff) {
+    editingStaff = staff;
+    editStaffName.value = staff.fullName || "";
+    editStaffPhone.value = staff.phone || "";
+    showFeedback(editStaffFeedback, "", null);
+    editStaffModal.hidden = false;
+    editStaffName.focus();
+}
+
+editStaffForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    if (!editingStaff) return;
+
+    const newPhone = editStaffPhone.value.trim();
+    if (newPhone === "") {
+        showFeedback(editStaffFeedback, "Please enter the phone number.", "error");
+        return;
+    }
+
+    if (newPhone.length > 11) {
+        showFeedback(editStaffFeedback, "Phone number must not exceed 11 characters.", "error");
+        return;
+    }
+
+    editStaffSubmitBtn.disabled = true;
+
+    try {
+        const result = await postJson(API.updateStaff, {
+            staffId: editingStaff.staffId,
+            fullName: editStaffName.value.trim().toUpperCase(),
+            phone: newPhone
+        });
+
+        if (!result.success) {
+            showFeedback(editStaffFeedback, result.message, "error");
+            return;
+        }
+
+        await loadStaff();
+        closeEditStaffModal();
+        showFeedback(dashboardFeedback, "Staff information updated.", "success");
+    } catch (err) {
+        console.error(err);
+        showFeedback(editStaffFeedback, "Could not reach the server.", "error");
+    } finally {
+        editStaffSubmitBtn.disabled = false;
+    }
+});
+
 async function loadStaff() {
     const data = await fetchJson(API.staff);
-    teachers = data.staff || [];
-    totalStaffCount.textContent = data.total ?? teachers.length;
+    staffMembers = data.staff || [];
+    totalStaffCount.textContent = data.total ?? staffMembers.length;
+    renderStaffDirectory();
 }
 
 async function checkAuth() {
     const data = await fetchJson(API.authCheck);
-    if (data.loggedIn) {
+    adminLoggedIn = Boolean(data.loggedIn);
+    if (adminLoggedIn) {
         adminBtn.textContent = "ADMIN OPEN";
         adminBtn.classList.add("active");
     }
-    return data.loggedIn;
+    return adminLoggedIn;
 }
 
 async function loadStats() {
@@ -146,11 +390,17 @@ async function loadStats() {
 }
 
 async function openAdminPage() {
+    adminLoggedIn = true;
+    renderStaffDirectory();
     adminPage.hidden = false;
     adminBtn.textContent = "ADMIN OPEN";
     adminBtn.classList.add("active");
     window.scrollTo(0, 0);
     await loadStaff();
+
+    await loadTodayAttendance();
+    await loadRecordsForView();
+    await loadAdminTimeRecords();
 }
 
 async function loadTodayAttendance() {
@@ -171,22 +421,143 @@ async function loadRecordsForView() {
         : "Attendance Records — " + date;
 }
 
+function appendCountCells(row, present, late, absent) {
+    [present, late, absent].forEach(function (value, index) {
+        const td = row.insertCell(index + 2);
+        td.className = "num " + (index === 1 ? "late" : index === 2 ? "absent" : "");
+        td.textContent = value;
+    });
+}
+
+function renderReport(data) {
+    reportResults.hidden = false;
+    reportTitle.textContent =
+        "Monthly Report — " +
+        data.monthLabel +
+        (data.filteredStaffId ? " (" + data.filteredStaffId + ")" : "");
+
+    reportSummary.innerHTML = "";
+    [
+        { label: "Present", value: data.summary.present, cls: "present" },
+        { label: "Late Comers", value: data.summary.late, cls: "late" },
+        { label: "Absent", value: data.summary.absent, cls: "absent" }
+    ].forEach(function (item) {
+        const card = document.createElement("div");
+        card.className = "report-summary-card " + item.cls;
+
+        const value = document.createElement("div");
+        value.className = "value";
+        value.textContent = item.value;
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = item.label;
+
+        card.appendChild(value);
+        card.appendChild(label);
+        reportSummary.appendChild(card);
+    });
+
+    reportTableBody.innerHTML = "";
+    if (data.rows.length === 0) {
+        const tr = reportTableBody.insertRow();
+        const td = tr.insertCell(0);
+        td.colSpan = 5;
+        td.className = "empty-note";
+        td.textContent = "No matching staff found.";
+    } else {
+        data.rows.forEach(function (row) {
+            const tr = reportTableBody.insertRow();
+            tr.insertCell(0).textContent = row.fullName;
+            tr.insertCell(1).textContent = row.staffId;
+            appendCountCells(tr, row.present, row.late, row.absent);
+        });
+
+        const totalRow = reportTableBody.insertRow();
+        totalRow.className = "report-total-row";
+        totalRow.insertCell(0).textContent = "TOTAL";
+        totalRow.insertCell(1).textContent = data.rows.length + " staff";
+        appendCountCells(
+            totalRow,
+            data.summary.present,
+            data.summary.late,
+            data.summary.absent
+        );
+    }
+
+    reportNote.textContent =
+        data.daysInMonth +
+        " days in this month · " +
+        data.summary.recorded +
+        " total attendance records.";
+}
+
+async function loadReport() {
+    const month = reportMonthInput.value;
+    const staffId = reportStaffIdInput.value.trim().toUpperCase();
+
+    if (!/^\d{4}-\d{2}$/.test(month)) {
+        showFeedback(reportFeedback, "Please select a month.", "error");
+        return;
+    }
+
+    generateReportBtn.disabled = true;
+
+    try {
+        const params = new URLSearchParams({ month: month });
+        if (staffId !== "") {
+            params.set("staffId", staffId);
+        }
+        const data = await fetchJson(API.report + "?" + params.toString());
+
+        if (data.success) {
+            showFeedback(reportFeedback, "", null);
+            renderReport(data);
+        } else {
+            reportResults.hidden = true;
+            showFeedback(reportFeedback, data.message, "error");
+        }
+    } catch (err) {
+        console.error(err);
+        showFeedback(reportFeedback, "Could not reach the server.", "error");
+    } finally {
+        generateReportBtn.disabled = false;
+    }
+}
+
+generateReportBtn.addEventListener("click", loadReport);
+reportMonthInput.addEventListener("change", loadReport);
+reportStaffIdInput.addEventListener("change", loadReport);
+
+reportStaffIdInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        loadReport();
+    }
+});
+
 async function init() {
     registerDateInput.value = getTodayDate();
     registerDateInput.max = getTodayDate();
+    adminTimeDateInput.value = getTodayDate();
+    adminTimeDateInput.max = getTodayDate();
+    reportMonthInput.value = getTodayDate().slice(0, 7);
+    reportMonthInput.max = getTodayDate().slice(0, 7);
     try {
         await checkAuth();
         await loadStats();
+        await loadStaff();
         if (!isBeforeCutoff()) {
             attendanceLocked = true;
             await postJson(API.finalize, {});
         }
         await loadTodayAttendance();
         await loadRecordsForView();
+        await loadReport();
     } catch (err) {
         console.error(err);
         showFeedback(
-            feedbackMessage,
+            dashboardFeedback,
             "Could not load data. Make sure XAMPP and the database are running.",
             "error"
         );
@@ -259,6 +630,7 @@ markAttendanceBtn.addEventListener("click", async function () {
                 staffId: data.staffId,
                 fullName: data.name,
                 timeIn: data.timeIn,
+                time24: data.time24,
                 status: data.status
             };
             todayRecords.push(row);
@@ -292,29 +664,40 @@ staffIdInput.addEventListener("keydown", function (event) {
 
 registerStaffBtn.addEventListener("click", async function () {
     const newStaffName = staffNameInput.value.trim();
+    const newStaffPhone = registerPhoneInput.value.trim();
 
     if (newStaffName === "") {
         showFeedback(registerFeedback, "Please enter the staff name.", "error");
         return;
     }
 
+    if (newStaffPhone === "") {
+        showFeedback(registerFeedback, "Please enter the phone number.", "error");
+        return;
+    }
+
+    if (newStaffPhone.length > 11) {
+        showFeedback(registerFeedback, "Phone number must not exceed 11 characters.", "error");
+        return;
+    }
+
     registerStaffBtn.disabled = true;
 
     try {
-        const data = await postJson(API.register, { name: newStaffName });
+        const data = await postJson(API.register, {
+            name: newStaffName.toUpperCase(),
+            phone: newStaffPhone
+        });
 
         if (data.success) {
-            teachers.push({
-                name: newStaffName,
-                staffId: data.staffId
-            });
-            totalStaffCount.textContent = teachers.length;
+            await loadStaff();
             showFeedback(
                 registerFeedback,
                 data.message + " Staff ID: " + data.staffId,
                 "success"
             );
             staffNameInput.value = "";
+            registerPhoneInput.value = "";
         } else {
             showFeedback(registerFeedback, data.message, "error");
         }
@@ -327,6 +710,13 @@ registerStaffBtn.addEventListener("click", async function () {
 });
 
 staffNameInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        registerStaffBtn.click();
+    }
+});
+
+registerPhoneInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") {
         event.preventDefault();
         registerStaffBtn.click();
@@ -403,16 +793,17 @@ adminLogoutBtn.addEventListener("click", async function () {
     } catch (err) {
         console.error(err);
     }
+    adminLoggedIn = false;
     adminPage.hidden = true;
     adminBtn.textContent = "ADMIN";
     adminBtn.classList.remove("active");
-    teachers = [];
+    renderStaffDirectory();
 });
 
 adminBackBtn.addEventListener("click", function () {
     adminPage.hidden = true;
-    adminBtn.textContent = "ADMIN";
-    adminBtn.classList.remove("active");
+    adminBtn.textContent = adminLoggedIn ? "ADMIN OPEN" : "ADMIN";
+    adminBtn.classList.toggle("active", adminLoggedIn);
 });
 
 function enforcePastDate() {
@@ -427,10 +818,19 @@ registerDateInput.addEventListener("change", function () {
 });
 registerDateInput.addEventListener("input", enforcePastDate);
 
+adminTimeDateInput.addEventListener("change", function () {
+    if (adminTimeDateInput.value > getTodayDate()) {
+        adminTimeDateInput.value = getTodayDate();
+    }
+    loadAdminTimeRecords();
+});
+
+staffSearchInput.addEventListener("input", renderStaffDirectory);
+
 function renderStaffList() {
     staffList.innerHTML = "";
 
-    if (teachers.length === 0) {
+    if (staffMembers.length === 0) {
         const message = document.createElement("div");
         message.className = "no-staff-message";
         message.textContent = "No staff registered.";
@@ -438,7 +838,7 @@ function renderStaffList() {
         return;
     }
 
-    teachers.forEach(function (teacher) {
+    staffMembers.forEach(function (staffMember) {
         const item = document.createElement("div");
         item.className = "staff-item";
 
@@ -446,10 +846,10 @@ function renderStaffList() {
         details.className = "staff-details";
 
         const name = document.createElement("strong");
-        name.textContent = teacher.fullName;
+        name.textContent = staffMember.fullName;
 
         const id = document.createElement("span");
-        id.textContent = teacher.staffId;
+        id.textContent = staffMember.staffId;
 
         details.appendChild(name);
         details.appendChild(id);
@@ -462,23 +862,24 @@ function renderStaffList() {
             removeBtn.disabled = true;
             try {
                 const data = await postJson(API.remove, {
-                    staffId: teacher.staffId
+                    staffId: staffMember.staffId
                 });
 
                 if (data.success) {
-                    const index = teachers.findIndex(function (t) {
-                        return t.staffId === teacher.staffId;
+                    const index = staffMembers.findIndex(function (t) {
+                        return t.staffId === staffMember.staffId;
                     });
                     if (index !== -1) {
-                        teachers.splice(index, 1);
+                        staffMembers.splice(index, 1);
                     }
-                    presentStaffIds.delete(teacher.staffId);
-                    recordedStaffIds.delete(teacher.staffId);
+                    presentStaffIds.delete(staffMember.staffId);
+                    recordedStaffIds.delete(staffMember.staffId);
                     todayRecords = todayRecords.filter(function (r) {
-                        return r.staffId !== teacher.staffId;
+                        return r.staffId !== staffMember.staffId;
                     });
-                    totalStaffCount.textContent = teachers.length;
+                    totalStaffCount.textContent = staffMembers.length;
                     presentTodayCount.textContent = presentStaffIds.size;
+                    renderStaffDirectory();
                     renderStaffList();
                     if (registerDateInput.value === getTodayDate()) {
                         renderRecords(todayRecords);
@@ -515,9 +916,28 @@ removeStaffModal.addEventListener("click", function (event) {
     }
 });
 
+closeEditTimeBtn.addEventListener("click", closeEditTimeModal);
+closeEditStaffBtn.addEventListener("click", closeEditStaffModal);
+
+editTimeModal.addEventListener("click", function (event) {
+    if (event.target === editTimeModal) {
+        closeEditTimeModal();
+    }
+});
+
+editStaffModal.addEventListener("click", function (event) {
+    if (event.target === editStaffModal) {
+        closeEditStaffModal();
+    }
+});
+
 document.addEventListener("keydown", function (event) {
     if (event.key !== "Escape") return;
-    if (!removeStaffModal.hidden) {
+    if (!editStaffModal.hidden) {
+        closeEditStaffModal();
+    } else if (!editTimeModal.hidden) {
+        closeEditTimeModal();
+    } else if (!removeStaffModal.hidden) {
         removeStaffModal.hidden = true;
     } else if (!loginModal.hidden) {
         closeLoginModal();

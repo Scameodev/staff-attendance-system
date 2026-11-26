@@ -6,12 +6,29 @@ require_once __DIR__ . "/db_connect.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$staffName = trim($data["name"] ?? "");
+$staffName = strtoupper(trim($data["name"] ?? ""));
+$phone = trim($data["phone"] ?? "");
 
 if ($staffName === "") {
     echo json_encode([
         "success" => false,
         "message" => "Please enter the staff name."
+    ]);
+    exit;
+}
+
+if ($phone === "") {
+    echo json_encode([
+        "success" => false,
+        "message" => "Please enter the phone number."
+    ]);
+    exit;
+}
+
+if (mb_strlen($phone) > 11) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Phone number must not exceed 11 characters."
     ]);
     exit;
 }
@@ -47,15 +64,20 @@ $row = $query->fetch_assoc();
 $newStaffId = "STF" . str_pad($row["next_number"], 3, "0", STR_PAD_LEFT);
 
 $insert = $conn->prepare(
-    "INSERT INTO staff (staff_id, full_name) VALUES (?, ?)"
+    "INSERT INTO staff (staff_id, full_name, phone) VALUES (?, ?, ?)"
 );
-$insert->bind_param("ss", $newStaffId, $staffName);
+$insert->bind_param("sss", $newStaffId, $staffName, $phone);
 $insert->execute();
 
 echo json_encode([
     "success" => true,
     "message" => $staffName . " registered successfully!",
-    "staffId" => $newStaffId
+    "staffId" => $newStaffId,
+    "staff" => [
+        "staffId" => $newStaffId,
+        "fullName" => $staffName,
+        "phone" => $phone
+    ]
 ]);
 
 $check->close();

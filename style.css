@@ -345,6 +345,143 @@ body {
   color: #f8fafc;
 }
 
+.time-in-cell {
+  white-space: nowrap;
+}
+
+.edit-time-btn {
+  margin-left: 8px;
+  background: transparent;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #38bdf8;
+  padding: 2px 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.edit-time-btn:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+}
+
+.staff-directory-count {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.staff-directory-list {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.directory-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.directory-controls .text-input,
+.directory-controls .date-input {
+  flex: 1 1 160px;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 100%;
+  background: #0f766e;
+  color: #ffffff;
+  border: 1px solid #115e59;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.export-btn:hover {
+  background: #115e59;
+}
+
+.directory-table {
+  min-width: 420px;
+}
+
+.directory-table th,
+.directory-table td {
+  font-size: 0.78rem;
+  padding: 10px 8px;
+  vertical-align: middle;
+}
+
+.status-badge {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.status-badge.absent {
+  background: rgba(127, 29, 29, 0.6);
+  color: #f87171;
+  border: 1px solid #991b1b;
+}
+
+.status-badge.present {
+  background: rgba(6, 78, 59, 0.6);
+  color: #4ade80;
+  border: 1px solid #065f46;
+}
+
+.status-badge.late {
+  background: rgba(120, 53, 15, 0.6);
+  color: #fbbf24;
+  border: 1px solid #b45309;
+}
+
+.directory-action-btn {
+  background: transparent;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #38bdf8;
+  padding: 4px 7px;
+  margin-right: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.directory-action-btn:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+}
+
+.directory-action-btn.edit {
+  color: #fbbf24;
+  border-color: #78350f;
+}
+
+.directory-action-btn.edit:hover {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #f59e0b;
+}
+
+.file-input {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
 .badge {
   padding: 4px 10px;
   border-radius: 20px;
@@ -431,6 +568,11 @@ body {
 .staff-management-title {
   font-size: 1.1rem;
   font-weight: 600;
+}
+
+.admin-time-list {
+  max-height: 280px;
+  overflow-y: auto;
 }
 
 .staff-list {
@@ -579,6 +721,25 @@ body {
   flex-direction: column;
   gap: 16px;
 }
+
+.modal-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.history-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.history-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
 .present-staff {
   background-color: #10b981;
   border-radius: 25px;
@@ -615,4 +776,87 @@ body {
   height: 30px;
   border-color: #3b1d1d;
   background: linear-gradient(135deg, #ff0c03 5%, #361a0d 100%);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.report-summary-card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.report-summary-card .value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.report-summary-card .label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.report-summary-card.present .value {
+  color: #4ade80;
+}
+
+.report-summary-card.late .value {
+  color: #fbbf24;
+}
+
+.report-summary-card.absent .value {
+  color: #f87171;
+}
+
+.report-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+}
+
+.report-table th,
+.report-table td {
+  padding: 10px 4px;
+  font-size: 0.78rem;
+}
+
+.report-table td.num {
+  font-size: 0.95rem;
+}
+
+.report-table th:not(:first-child),
+.report-table td:not(:first-child) {
+  text-align: center;
+}
+
+.report-table td.num {
+  font-weight: 600;
+}
+
+.report-table td.num.late {
+  color: #fbbf24;
+}
+
+.report-table td.num.absent {
+  color: #f87171;
+}
+
+.report-total-row td {
+  border-top: 2px solid #334155;
+  color: #e2e8f0;
+  font-weight: 700;
 }

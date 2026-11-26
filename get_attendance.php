@@ -41,6 +41,9 @@ while ($row = $result->fetch_assoc()) {
         "timeIn" => $row["time_in"]
             ? date("g:i A", strtotime($row["time_in"]))
             : "-",
+        "time24" => $row["time_in"]
+            ? date("H:i", strtotime($row["time_in"]))
+            : "",
         "status" => $row["status"]
     ];
 }

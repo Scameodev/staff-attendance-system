@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teacher Attendance System</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>Staff Attendance System</title>
+    <link rel="stylesheet" href="style.css?v=14" />
   </head>
   <body>
     <div class="dashboard-container">
       <div class="header-card">
         <div class="header-copy">
           <div class="header-title"> 
-            <img src="img/graduation-cap-svgrepo-com.svg" alt="" id="img"> TEACHER ATTENDANCE SYSTEM</div>
+            <img src="img/graduation-cap-svgrepo-com.svg" alt="" id="img"> STAFF ATTENDANCE SYSTEM</div>
           <div class="header-subtitle">Staff attendance recording dashboard</div>
         </div>
         <button type="button" id="adminBtn" class="admin-btn">ADMIN</button>
@@ -28,8 +28,42 @@
         </div>
       </div>
 
+      <section class="records-section staff-directory">
+        <div class="records-header">
+          <div class="records-title">Staff Directory</div>
+          <div class="staff-directory-count" id="staffDirectoryCount">
+            0 staff
+          </div>
+        </div>
+
+        <div class="directory-controls">
+          <input
+            type="search"
+            id="staffSearchInput"
+            class="text-input"
+            placeholder="Search by name or Staff ID"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="staff-directory-list">
+          <table class="attendance-table directory-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Staff ID</th>
+                <th>Phone</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="staffDirectoryBody"></tbody>
+          </table>
+        </div>
+        <span id="dashboardFeedback" class="feedback-msg"></span>
+      </section>
+
       <div class="form-card">
-        <div class="form-title">Record Teacher Attendance</div>
+        <div class="form-title">Record Staff Attendance</div>
 
         <div class="input-group">
           <label class="input-label" for="staffIdInput">Enter Staff ID</label>
@@ -103,6 +137,57 @@
         </div>
       </div>
 
+      <div class="form-card report-card">
+        <div class="form-title">Monthly Attendance Report</div>
+
+        <div class="input-group">
+          <label class="input-label" for="reportMonthInput">Select Month</label>
+          <input type="month" id="reportMonthInput" class="date-input" />
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="reportStaffIdInput"
+            >Staff ID (optional — leave blank for all staff)</label
+          >
+          <input
+            type="text"
+            id="reportStaffIdInput"
+            class="text-input"
+            placeholder="e.g. STF001"
+            autocomplete="off"
+          />
+        </div>
+
+        <button type="button" id="generateReportBtn" class="submit-btn secondary">
+          <span>▦</span> GENERATE REPORT
+        </button>
+        <span id="reportFeedback" class="feedback-msg"></span>
+      </div>
+
+      <div class="records-section" id="reportResults" hidden>
+        <div class="records-header">
+          <div class="records-title" id="reportTitle">Monthly Report</div>
+        </div>
+
+        <div class="report-summary" id="reportSummary"></div>
+
+        <div class="report-table-wrap">
+          <table class="attendance-table report-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Staff ID</th>
+                <th>Present</th>
+                <th>Late</th>
+                <th>Absent</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+          </table>
+        </div>
+        <div class="footer-note" id="reportNote"></div>
+      </div>
+
     </div>
 
     <div class="admin-page" id="adminPage" hidden>
@@ -123,6 +208,31 @@
         </div>
 
         <div class="admin-page-grid">
+          <div class="form-card" id="editTimeCard">
+            <div class="form-title">Edit Staff Time In</div>
+
+            <div class="input-group">
+              <label class="input-label" for="adminTimeDateInput"
+                >Attendance Date</label
+              >
+              <input type="date" id="adminTimeDateInput" class="date-input" />
+            </div>
+
+            <div class="admin-time-list">
+              <table class="attendance-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Staff ID</th>
+                    <th>Time In</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="adminTimeTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
           <div class="form-card" id="registerStaffCard">
             <div class="form-title">Register New Staff</div>
 
@@ -132,11 +242,26 @@
                 type="text"
                 id="staffNameInput"
                 class="text-input"
-                placeholder="e.g. Jane Doe"
+                placeholder="e.g. JANE DOE"
                 autocomplete="off"
                 maxlength="60"
+                style="text-transform: uppercase"
               />
               <span id="registerFeedback" class="feedback-msg"></span>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label" for="registerPhoneInput"
+                >Phone</label
+              >
+              <input
+                type="text"
+                id="registerPhoneInput"
+                class="text-input"
+                placeholder="e.g. 09033473222"
+                maxlength="11"
+                required
+              />
             </div>
 
             <button
@@ -198,6 +323,94 @@
       </div>
     </div>
 
+    <div class="modal-overlay" id="editStaffModal" hidden>
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="editStaffModalTitle"
+      >
+        <div class="modal-header">
+          <div class="modal-title" id="editStaffModalTitle">Edit Staff Information</div>
+          <button
+            type="button"
+            id="closeEditStaffBtn"
+            class="modal-close"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <form id="editStaffForm" class="login-form">
+          <div class="input-group">
+            <label class="input-label" for="editStaffName">Full Name</label>
+            <input
+              type="text"
+              id="editStaffName"
+              class="text-input"
+              maxlength="100"
+              required
+              style="text-transform: uppercase"
+            />
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="editStaffPhone">Phone</label>
+            <input
+              type="text"
+              id="editStaffPhone"
+              class="text-input"
+              maxlength="11"
+              required
+            />
+          </div>
+          <span id="editStaffFeedback" class="feedback-msg"></span>
+          <button type="submit" id="editStaffSubmitBtn" class="submit-btn">
+            SAVE CHANGES
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="editTimeModal" hidden>
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="editTimeModalTitle"
+      >
+        <div class="modal-header">
+          <div class="modal-title" id="editTimeModalTitle">Edit Time In</div>
+          <button
+            type="button"
+            id="closeEditTimeBtn"
+            class="modal-close"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <form id="editTimeForm" class="login-form">
+          <div class="input-group">
+            <div class="input-label" id="editTimeStaffLabel"></div>
+            <input
+              type="text"
+              id="editTimeDateInput"
+              class="read-only-input"
+              readonly
+            />
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="editTimeInput">New Time In</label>
+            <input type="time" id="editTimeInput" class="text-input" required />
+            <span id="editTimeFeedback" class="feedback-msg"></span>
+          </div>
+          <button type="submit" id="editTimeSubmitBtn" class="submit-btn">
+            SAVE TIME
+          </button>
+        </form>
+      </div>
+    </div>
+
     <div class="modal-overlay" id="loginModal" hidden>
       <div
         class="modal"
@@ -236,6 +449,6 @@
       </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=14"></script>
   </body>
 </html>
